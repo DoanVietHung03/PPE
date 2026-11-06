@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Datasets -> Google Drive
+/dataset/
+archive/legacy-8c/dataset/
+
+# Weights / checkpoints -> Google Drive
+*.pth
+*.pt
+*.onnx
+*.task
+*.safetensors
+
+# Training/benchmark outputs (images, logs) -> Google Drive
+output/**
+!output/ppe-5c/
+!output/ppe-5c/evaluation/
+!output/ppe-5c/evaluation/**
+!output/dataset-audit/
+!output/dataset-audit/*.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Large prediction dumps (~40MB) -> Google Drive
+output/**/*.jsonl
+D-FINE.git.bak/

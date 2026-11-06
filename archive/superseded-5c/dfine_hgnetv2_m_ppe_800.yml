@@ -1,0 +1,60 @@
+__include__:
+  - ./dfine_hgnetv2_m_custom.yml
+  - ./ppe_detection.yml
+
+output_dir: /home/hsv/hungdv/PPE/output/dfine_m_ppe_commercial/run-800
+
+eval_spatial_size: [800, 800]
+
+HGNetv2:
+  pretrained: False
+
+optimizer:
+  type: AdamW
+  params:
+    -
+      params: '^(?=.*backbone)(?!.*norm|bn).*$'
+      lr: 0.000003125
+    -
+      params: '^(?=.*backbone)(?=.*norm|bn).*$'
+      lr: 0.000003125
+      weight_decay: 0.
+    -
+      params: '^(?=.*(?:encoder|decoder))(?=.*(?:norm|bn|bias)).*$'
+      weight_decay: 0.
+  lr: 0.00003125
+  betas: [0.9, 0.999]
+  weight_decay: 0.000125
+
+train_dataloader:
+  total_batch_size: 4
+  dataset:
+    transforms:
+      ops:
+        - {type: RandomPhotometricDistort, p: 0.5}
+        - {type: RandomZoomOut, fill: 0}
+        - {type: RandomIoUCrop, p: 0.8}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: RandomHorizontalFlip}
+        - {type: Resize, size: [800, 800]}
+        - {type: SanitizeBoundingBoxes, min_size: 1}
+        - {type: ConvertPILImage, dtype: float32, scale: True}
+        - {type: ConvertBoxes, fmt: cxcywh, normalize: True}
+      policy:
+        name: stop_epoch
+        epoch: 120
+        ops: [RandomPhotometricDistort, RandomZoomOut, RandomIoUCrop]
+  collate_fn:
+    type: BatchImageCollateFunction
+    base_size: 800
+    base_size_repeat: 6
+    stop_epoch: 120
+    ema_restart_decay: 0.9999
+
+val_dataloader:
+  total_batch_size: 4
+  dataset:
+    transforms:
+      ops:
+        - {type: Resize, size: [800, 800]}
+        - {type: ConvertPILImage, dtype: float32, scale: True}

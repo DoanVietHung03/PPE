@@ -1,0 +1,101 @@
+{
+  "buckets": {},
+  "false_alarms_per_person": 0.1607080874696286,
+  "labels": {
+    "boots": {
+      "evaluated": 235,
+      "f1": 0.4242424242424243,
+      "false_negatives": 170,
+      "false_positives": 1,
+      "precision": 0.984375,
+      "recall": 0.2703862660944206,
+      "true_negatives": 1,
+      "true_positives": 63,
+      "unknown_coverage": 0.7222222222222222
+    },
+    "gloves": {
+      "evaluated": 741,
+      "f1": 0.19825072886297376,
+      "false_negatives": 547,
+      "false_positives": 3,
+      "precision": 0.9577464788732394,
+      "recall": 0.11056910569105691,
+      "true_negatives": 123,
+      "true_positives": 68,
+      "unknown_coverage": 0.6329268292682927
+    },
+    "helmet": {
+      "evaluated": 2082,
+      "f1": 0.5559599636032757,
+      "false_negatives": 970,
+      "false_positives": 6,
+      "precision": 0.9902755267423015,
+      "recall": 0.3864642631246047,
+      "true_negatives": 495,
+      "true_positives": 611,
+      "unknown_coverage": 0.41061571125265395
+    },
+    "no_boots": {
+      "evaluated": 81,
+      "f1": 0.10526315789473684,
+      "false_negatives": 12,
+      "false_positives": 5,
+      "precision": 0.16666666666666666,
+      "recall": 0.07692307692307693,
+      "true_negatives": 63,
+      "true_positives": 1,
+      "unknown_coverage": 0.7222222222222222
+    },
+    "no_gloves": {
+      "evaluated": 357,
+      "f1": 0.5970873786407768,
+      "false_negatives": 66,
+      "false_positives": 100,
+      "precision": 0.5515695067264574,
+      "recall": 0.6507936507936508,
+      "true_negatives": 68,
+      "true_positives": 123,
+      "unknown_coverage": 0.6329268292682927
+    },
+    "no_helmet": {
+      "evaluated": 1626,
+      "f1": 0.6556291390728477,
+      "false_negatives": 258,
+      "false_positives": 262,
+      "precision": 0.6538969616908851,
+      "recall": 0.6573705179282868,
+      "true_negatives": 611,
+      "true_positives": 495,
+      "unknown_coverage": 0.41061571125265395
+    },
+    "no_vest": {
+      "evaluated": 1360,
+      "f1": 0.5871271585557299,
+      "false_negatives": 448,
+      "false_positives": 78,
+      "precision": 0.827433628318584,
+      "recall": 0.45498783454987834,
+      "true_negatives": 460,
+      "true_positives": 374,
+      "unknown_coverage": 0.47643384440658715
+    },
+    "vest": {
+      "evaluated": 1314,
+      "f1": 0.657142857142857,
+      "false_negatives": 472,
+      "false_positives": 8,
+      "precision": 0.9829059829059829,
+      "recall": 0.49356223175965663,
+      "true_negatives": 374,
+      "true_positives": 460,
+      "unknown_coverage": 0.47643384440658715
+    }
+  },
+  "macro_f1": 0.4725878510019528,
+  "metadata": {
+    "instances": "../dataset/PPE_COMMERCIAL/current/annotations/instances_test.json",
+    "states": "../dataset/PPE_COMMERCIAL/current/annotations/states_test.json"
+  },
+  "no_ppe_macro_recall": 0.4600187700487232,
+  "people": 2881
+}

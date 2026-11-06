@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "dataset_build_id": "fixture-build",
+    "checkpoint_sha256": "fixture-checkpoint",
+    "pose_model_sha256": "fixture-pose",
+    "thresholds": {"detection": 0.5, "keypoint": 0.5}
+  },
+  "samples": [
+    {
+      "ground_truth": {"helmet": "present", "no_helmet": "absent"},
+      "prediction": {"helmet": "present", "no_helmet": "absent"},
+      "buckets": {"image_kind": "full_frame", "source": "fixture"}
+    },
+    {
+      "ground_truth": {"helmet": "absent", "no_helmet": "present"},
+      "prediction": {"helmet": "absent", "no_helmet": "unknown"},
+      "buckets": {"image_kind": "person_crop", "source": "fixture"}
+    }
+  ]
+}

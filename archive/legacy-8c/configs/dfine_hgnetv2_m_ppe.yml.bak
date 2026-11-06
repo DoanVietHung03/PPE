@@ -1,0 +1,8 @@
+__include__:
+  - /workspace/D-FINE/configs/dfine/custom/dfine_hgnetv2_m_custom.yml
+  - /workspace/PPE/configs/dfine/ppe_detection.yml
+
+output_dir: /workspace/PPE/output/dfine_m_ppe
+
+HGNetv2:
+  pretrained: False

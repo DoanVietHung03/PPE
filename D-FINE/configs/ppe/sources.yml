@@ -1,0 +1,181 @@
+sources:
+  - id: roboflow_safety_ppe_v1
+    status: approved
+    sha256: b307c1fc084abcfa8837ad88e99eb0d3b01add0943c1a282d880e37c0a95b5d9
+    resolver: roboflow
+    workspace: safety-jmser
+    project: safety_ppe
+    version: 1
+    format: coco
+    license: CC-BY-4.0
+    evidence_url: https://universe.roboflow.com/safety-jmser/safety_ppe/dataset/1
+    mappings:
+      Person: person
+      Helmet: helmet
+      Glove: gloves
+      No_Glove: no_gloves
+      Shoe: boots
+      No_Shoe: no_boots
+      No_Helmet: no_helmet
+
+  - id: roboflow_factory_workers_v1
+    status: quarantined
+    reason: 2390 of 6462 images are exact dHash duplicates and only 34 shoe/no_shoe instances
+    resolver: roboflow
+    workspace: vishesh-mehta-9fd3l
+    project: factory-workers
+    version: 1
+    format: coco
+    license: CC-BY-4.0
+    evidence_url: https://universe.roboflow.com/vishesh-mehta-9fd3l/factory-workers/dataset/1
+    mappings:
+      glove: gloves
+      no_glove: no_gloves
+      shoes: boots
+      no_shoes: no_boots
+
+  - id: roboflow_apd_k3_v1
+    status: quarantined
+    reason: pinned Roboflow version 1 has no downloadable COCO export
+    resolver: roboflow
+    workspace: wzwworkspace
+    project: dataset-apd-k3-helmet-vest-gloves-shoes-g92gz
+    version: 1
+    format: coco
+    license: CC-BY-4.0
+    evidence_url: https://universe.roboflow.com/wzwworkspace/dataset-apd-k3-helmet-vest-gloves-shoes-g92gz/dataset/1
+    mappings:
+      Helmet: helmet
+      Vest: vest
+      Gloves: gloves
+      No-Gloves: no_gloves
+      No-Helmet: no_helmet
+      Shoes: boots
+      No-Shoes: no_boots
+      No-Vest: no_vest
+
+  - id: mendeley_ppe_v6
+    status: quarantined
+    resolver: mendeley
+    dataset_id: zkzghjvpn2
+    version: 6
+    format: yolo
+    license: CC-BY-4.0
+    evidence_url: https://data.mendeley.com/datasets/zkzghjvpn2/6
+    reason: dataset description aggregates GitHub, Kaggle, and Roboflow images without per-image provenance
+    mappings:
+      Helmet: helmet
+      Vest: vest
+      NoHelmet: no_helmet
+      NoVest: no_vest
+
+  - id: roboflow_construction_site_safety_v30
+    status: approved
+    resolver: roboflow
+    workspace: roboflow-universe-projects
+    project: construction-site-safety
+    version: 30
+    sha256: 0a06069aa57fcf650b53081d178dbd287771301adf829737cf5bfe9fac9f088f
+    format: coco
+    license: CC-BY-4.0
+    evidence_url: https://universe.roboflow.com/roboflow-universe-projects/construction-site-safety/dataset/30
+    mappings:
+      Person: person
+      Hardhat: helmet
+      Safety Vest: vest
+      Gloves: gloves
+      NO-Hardhat: no_helmet
+      NO-Safety Vest: no_vest
+
+  - id: roboflow_ppe_compliance_v2
+    status: pending_clearance
+    sha256: 0d13990223cb4e8ded733b2958e15deddf70e8bcc8252b841ea6ab571d42c41a
+    reason: audited candidate for expanded taxonomy; not compatible with the fixed 5-class builder
+    resolver: roboflow
+    workspace: izanagi
+    project: ppe-detection-and-compliance
+    version: 2
+    format: coco
+    license: CC-BY-4.0
+    evidence_url: https://universe.roboflow.com/izanagi/ppe-detection-and-compliance/dataset/2
+    mappings:
+      Person: person
+      Helmet: helmet
+      NO-Helmet: no_helmet
+      Vest: vest
+      NO-Vest: no_vest
+      Gloves: gloves
+      NO-Gloves: no_gloves
+      Boots: boots
+      NO-Boots: no_boots
+      Mask: mask
+      NO-Mask: no_mask
+      Goggles: eye_protection
+      NO-Goggles: no_eye_protection
+
+  - id: roboflow_pants_v2_v1
+    status: pending_clearance
+    sha256: bd0418f649ce267be0606b13ced88766028817a0c7fdd52b1b893ff94d39b7e2
+    reason: pants-only partial labels must not be merged into PPE detector images as background
+    resolver: roboflow
+    workspace: nckh-oufrk
+    project: pants_v2
+    version: 1
+    format: coco
+    license: CC-BY-4.0
+    evidence_url: https://universe.roboflow.com/nckh-oufrk/pants_v2/dataset/1
+    mappings:
+      long-pants: long_pants
+      short-pants: short_pants
+
+  - id: ultralytics_construction_ppe
+    status: quarantined
+    sha256: bef8dcb599aa4e9d9f5e602cb6fa7143d3c84d7f6a0ff40463d7f2a4c2632ccc
+    license: AGPL-3.0
+    evidence_url: https://docs.ultralytics.com/datasets/detect/construction-ppe/
+    reason: AGPL-3.0; audit only pending commercial clearance
+    mappings:
+      helmet: helmet
+      gloves: gloves
+      vest: vest
+      boots: boots
+      goggles: eye_protection
+      Person: person
+      no_helmet: no_helmet
+      no_goggle: no_eye_protection
+      no_gloves: no_gloves
+      no_boots: no_boots
+
+  - id: legacy_construction_local
+    status: quarantined
+    license: CC-BY-4.0
+    evidence_url: file:../../archive/legacy-8c/dataset/audit.json
+    reason: original URL, version, and license evidence are not recorded
+
+  - id: legacy_worker_safety_2
+    status: quarantined
+    license: CC-BY-4.0
+    evidence_url: file:../../archive/legacy-8c/dataset/audit.json
+    reason: original URL, version, and license evidence are not recorded
+
+  - id: legacy_worker_safety_25
+    status: quarantined
+    license: CC-BY-4.0
+    evidence_url: file:../../archive/legacy-8c/dataset/audit.json
+    reason: original URL, version, and license evidence are not recorded
+
+models:
+  - id: dfine_m_coco
+    status: approved
+    license: Apache-2.0
+    evidence_url: https://github.com/Peterande/D-FINE
+    url: https://github.com/Peterande/storage/releases/download/dfinev1.0/dfine_m_coco.pth
+    sha256: b44a7586bf490858c7b8bce9e44bd025cb88724df9a07a8deb3ae1c12e608195
+    reason: official D-FINE Apache-2.0 release checkpoint trained on COCO; not an Objects365 checkpoint
+
+  - id: blazepose_heavy
+    status: approved
+    license: Apache-2.0
+    evidence_url: https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf
+    url: https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task
+    sha256: 64437af838a65d18e5ba7a0d39b465540069bc8aae8308de3e318aad31fcbc7b

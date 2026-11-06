@@ -1,0 +1,5 @@
+__include__:
+  - ../../../ppe-5c/configs/dfine_m_960.yml
+  - ./dataset.yml
+
+output_dir: /home/hsv/hungdv/PPE/output/candidates/pants-2c/training

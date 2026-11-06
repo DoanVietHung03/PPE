@@ -1,0 +1,30 @@
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+
+from src.ppe.inference import detections_from_outputs, map_pose_landmarks, padded_crop
+
+
+class PPEInferenceAdapterTest(unittest.TestCase):
+    def test_maps_normalized_crop_landmarks_back_to_frame(self):
+        landmarks = [SimpleNamespace(x=0.5, y=0.25, visibility=0.8, presence=0.6)] * 33
+
+        mapped = map_pose_landmarks(landmarks, (10, 20, 110, 220))
+
+        self.assertEqual((mapped["nose"].x, mapped["nose"].y), (60.0, 70.0))
+        self.assertEqual(mapped["nose"].score, 0.6)
+
+    def test_maps_detector_outputs_and_filters_confidence(self):
+        detections = detections_from_outputs(
+            [0, 3, 4], [[1, 2, 11, 22], [3, 4, 13, 24], [5, 6, 15, 26]],
+            [0.9, 0.7, 0.2], threshold=0.5,
+        )
+
+        self.assertEqual([item.category for item in detections], ["person", "gloves"])
+
+    def test_person_crop_padding_is_bounded_by_frame(self):
+        self.assertEqual(padded_crop((0, 5, 80, 95), (100, 100)), (0, 0, 88, 100))
+
+
+if __name__ == "__main__":
+    unittest.main()

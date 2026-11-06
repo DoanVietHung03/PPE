@@ -1,0 +1,14 @@
+__include__:
+  - /home/hsv/hungdv/PPE/D-FINE/configs/dfine/custom/dfine_hgnetv2_m_custom.yml
+  - /home/hsv/hungdv/PPE/configs/dfine/ppe_detection.yml
+
+output_dir: /home/hsv/hungdv/PPE/output/dfine_m_ppe
+
+HGNetv2:
+  pretrained: False
+
+train_dataloader:
+  total_batch_size: 4
+
+val_dataloader:
+  total_batch_size: 4

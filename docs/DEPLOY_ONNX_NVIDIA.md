@@ -1,0 +1,314 @@
+# Deploy PPE detector bằng ONNX Runtime GPU
+
+Tài liệu này dùng cho model PPE đã chọn sau khi đánh giá trên benchmark full-frame cố định.
+
+## 1. Model được phê duyệt
+
+| Thành phần | Giá trị |
+|---|---|
+| Kiến trúc | D-FINE M |
+| Checkpoint | `output/ppe-5c/training/run-960-6a4dd4f1292433d7-b4/best_stg2.pth` |
+| Config | `pipelines/ppe-5c/configs/dfine_m_960.yml` |
+| Input | RGB `float32`, NCHW, `1 x 3 x 960 x 960`, giá trị `[0, 1]` |
+| Confidence khởi đầu | `0.5` |
+| SHA-256 checkpoint | `758b67fb5deaf8d4be146bcd3792de1a9b6bf9283aa59e01bffc03662b5f2d69` |
+| SHA-256 config | `eb966d2911153319f610e5014e40f841c74ae12660c247dac09264cfce95d3fe` |
+
+Config trên được dùng để dựng đúng kiến trúc khi export. `output_dir` không quyết định checkpoint được nạp và không ảnh hưởng file ONNX vì `--resume` trỏ trực tiếp tới checkpoint `6a4d...-b4` ở trên.
+
+Class mapping là một phần của contract, không được đổi thứ tự:
+
+```text
+0 person
+1 helmet
+2 vest
+3 gloves
+4 boots
+```
+
+Model ONNX chỉ trả về object detection. Nó không tự kết luận một món PPE thuộc về người nào. Nếu sản phẩm cần trạng thái kiểu “người A không đội mũ”, phải giữ thêm tầng association/policy hoặc port pipeline `pipelines/ppe-5c/tools/run_hybrid.py` sang dự án mới.
+
+## 2. Export ONNX
+
+Export phải thực hiện trong repo này vì bước này cần source D-FINE, config và checkpoint. Project deploy mới chỉ cần file `.onnx` và code preprocessing/postprocessing.
+
+Cài dependency export trong môi trường hiện tại:
+
+```bash
+cd /home/hsv/hungdv/PPE/D-FINE
+../venv/bin/pip install onnx onnxsim
+```
+
+Script `tools/deployment/export_onnx.py` upstream đang hard-code batch 32 và kích thước 640. Với PyTorch 2.11, exporter mặc định còn chuyển sang Dynamo và yêu cầu thêm `onnxscript`. Để giữ luồng legacy đã có của repo, trước khi export hãy sửa hai dòng tạo input mẫu thành:
+
+```python
+data = torch.rand(1, 3, 960, 960)
+size = torch.tensor([[960, 960]], dtype=torch.int64)
+```
+
+và thêm `dynamo=False` vào lệnh gọi `torch.onnx.export(...)`:
+
+```python
+torch.onnx.export(
+    model,
+    (data, size),
+    output_file,
+    input_names=["images", "orig_target_sizes"],
+    output_names=["labels", "boxes", "scores"],
+    dynamic_axes=dynamic_axes,
+    opset_version=16,
+    verbose=False,
+    do_constant_folding=True,
+    dynamo=False,
+)
+```
+
+Không đổi `opset_version=16`, input names, output names hoặc `dynamic_axes`. Sau đó export:
+
+```bash
+../venv/bin/python tools/deployment/export_onnx.py \
+  --check \
+  --simplify \
+  --config ../pipelines/ppe-5c/configs/dfine_m_960.yml \
+  --resume ../output/ppe-5c/training/run-960-6a4dd4f1292433d7-b4/best_stg2.pth
+```
+
+File tạo ra nằm cạnh checkpoint:
+
+```text
+../output/ppe-5c/training/run-960-6a4dd4f1292433d7-b4/best_stg2.onnx
+```
+
+Kiểm tra model:
+
+```bash
+../venv/bin/python - <<'PY'
+import onnx
+
+path = "../output/ppe-5c/training/run-960-6a4dd4f1292433d7-b4/best_stg2.onnx"
+model = onnx.load(path)
+onnx.checker.check_model(model)
+print("ONNX OK")
+PY
+```
+
+## 3. Contract ONNX
+
+### Inputs
+
+| Tên | Dtype | Shape | Ý nghĩa |
+|---|---|---|---|
+| `images` | `float32` | `[N, 3, 960, 960]` | Ảnh RGB đã resize trực tiếp và chia 255 |
+| `orig_target_sizes` | `int64` | `[N, 2]` | Kích thước ảnh gốc theo thứ tự `[width, height]` |
+
+Validation, benchmark cuối và runtime chuẩn đều resize trực tiếp về 960×960. Training có multi-scale augmentation trước epoch 30, vì vậy không nên mô tả training là fixed-size toàn bộ. Không dùng letterbox hoặc resize 640 trong runtime mới. Postprocessor nằm trong ONNX và dùng `orig_target_sizes` để trả box về tọa độ ảnh gốc.
+
+### Outputs
+
+| Tên | Dtype | Shape | Ý nghĩa |
+|---|---|---|---|
+| `labels` | `int64` | `[N, 300]` | Class ID |
+| `boxes` | `float32` | `[N, 300, 4]` | Box `xyxy` trên ảnh gốc |
+| `scores` | `float32` | `[N, 300]` | Confidence |
+
+Ba output trên luôn có top 300 query; chỉ batch `N` là dynamic, chiều ảnh cố định 960×960. Model đã chứa postprocessor và top-k query. Runtime chỉ cần lọc `scores >= threshold`; không chạy NMS lần nữa trừ khi kiểm thử thực tế chứng minh cần thiết.
+
+## 4. Cấu trúc project deploy tối thiểu
+
+```text
+ppe-deploy/
+├── models/
+│   └── dfine_m_960.onnx
+├── infer.py
+└── requirements.txt
+```
+
+`requirements.txt`:
+
+```text
+numpy
+onnxruntime-gpu==1.26.*
+Pillow
+```
+
+Guide này chọn ONNX Runtime 1.26.x cho CUDA 12.8 và cuDNN 9.x. Máy export hiện dùng PyTorch 2.11.0 + CUDA 12.8; máy deploy vẫn phải có NVIDIA driver hỗ trợ CUDA 12.x và cuDNN 9.x. Không cài đồng thời `onnxruntime` CPU và `onnxruntime-gpu` trong cùng environment. Nếu máy đích dùng CUDA/cuDNN major khác, chọn lại phiên bản theo [bảng tương thích CUDA Execution Provider chính thức](https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements), rồi khóa phiên bản đó trong file dependency.
+
+## 5. Runtime ONNX Runtime GPU tối thiểu
+
+`infer.py`:
+
+```python
+from pathlib import Path
+
+import numpy as np
+import onnxruntime as ort
+from PIL import Image
+
+
+INPUT_SIZE = 960
+CLASS_NAMES = ("person", "helmet", "vest", "gloves", "boots")
+THRESHOLDS = {
+    "person": 0.40,
+    "helmet": 0.40,
+    "vest": 0.23,
+    "gloves": 0.22,
+    "boots": 0.22,
+}
+
+
+class PPEDetector:
+    def __init__(self, model_path: str | Path):
+        self.session = ort.InferenceSession(
+            str(model_path),
+            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+        )
+        if self.session.get_providers()[0] != "CUDAExecutionProvider":
+            raise RuntimeError(
+                f"ONNX Runtime không dùng GPU: {self.session.get_providers()}"
+            )
+
+    def predict(self, image: Image.Image, thresholds=THRESHOLDS) -> list[dict]:
+        image = image.convert("RGB")
+        width, height = image.size
+        resized = image.resize((INPUT_SIZE, INPUT_SIZE), Image.Resampling.BILINEAR)
+        tensor = np.asarray(resized, dtype=np.float32).transpose(2, 0, 1)
+        tensor = np.ascontiguousarray(tensor[None] / 255.0)
+        original_size = np.asarray([[width, height]], dtype=np.int64)
+
+        labels, boxes, scores = self.session.run(
+            ["labels", "boxes", "scores"],
+            {"images": tensor, "orig_target_sizes": original_size},
+        )
+
+        detections = []
+        for label, box, score in zip(labels[0], boxes[0], scores[0]):
+            class_name = CLASS_NAMES[int(label)]
+            if score < thresholds[class_name]:
+                continue
+            x1, y1, x2, y2 = box.tolist()
+            detections.append({
+                "class_id": int(label),
+                "class_name": class_name,
+                "score": float(score),
+                "box_xyxy": [
+                    max(0.0, min(float(width), x1)),
+                    max(0.0, min(float(height), y1)),
+                    max(0.0, min(float(width), x2)),
+                    max(0.0, min(float(height), y2)),
+                ],
+            })
+        return detections
+
+
+if __name__ == "__main__":
+    detector = PPEDetector("models/ppe-5c/dfine_m_960.onnx")
+    result = detector.predict(Image.open("test.jpg"))
+    for detection in result:
+        print(detection)
+```
+
+Chạy:
+
+```bash
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python infer.py
+```
+
+Nếu gặp lỗi GPU provider, kiểm tra trước khi debug model:
+
+```bash
+.venv/bin/python - <<'PY'
+import onnxruntime as ort
+
+print("device:", ort.get_device())
+print("providers:", ort.get_available_providers())
+assert "CUDAExecutionProvider" in ort.get_available_providers()
+PY
+```
+
+## 6. Dùng với video hoặc camera
+
+Đọc từng frame bằng OpenCV, chuyển BGR sang RGB/PIL rồi gọi cùng `predict()`. Không tạo lại `InferenceSession` cho từng frame; khởi tạo detector đúng một lần khi service bắt đầu.
+
+Model xử lý từng frame độc lập, không có tracking. Debounce 3–5 frame chỉ phù hợp cho cảnh báo toàn cảnh. Nếu cảnh báo gắn với từng người, project phải tracking identity trước rồi mới tính persistence cho từng track; không được coi detection ở các frame liên tiếp là cùng một người.
+
+## 7. Chọn confidence threshold
+
+Ngưỡng khởi đầu đã kiểm tra trên các ảnh test hiện tại:
+
+| Class | Threshold |
+|---|---:|
+| `person` | `0.40` |
+| `helmet` | `0.40` |
+| `vest` | `0.23` |
+| `gloves` | `0.22` |
+| `boots` | `0.22` |
+
+Trong full pipeline, có thể chỉnh bằng `--person-confidence`, `--helmet-confidence`, `--vest-confidence`, `--gloves-confidence` và `--boots-confidence`. `--detection-confidence` vẫn tồn tại để ghi đè cùng một ngưỡng cho tất cả class. Chỉ thay đổi sau khi đo trên camera thật.
+
+## 8. Xác minh trước khi đưa vào production
+
+1. Chạy cùng 20–50 ảnh, trong đó có ít nhất một ảnh không vuông, qua PyTorch và ONNX.
+2. Với detection có score từ 0.5 trở lên, yêu cầu class giống nhau, `abs(score_torch - score_onnx) <= 1e-3` và sai khác lớn nhất của bốn tọa độ box không quá 1 pixel.
+3. Kiểm tra `CUDAExecutionProvider` thực sự đứng đầu danh sách provider.
+4. Warm-up ít nhất 10 lượt trước khi đo latency.
+5. Đo latency p50/p95 trên đúng GPU, đúng độ phân giải và đúng batch production.
+6. Lưu SHA-256 của file ONNX cạnh version ứng dụng.
+7. Test tối thiểu các trường hợp: không có người, nhiều người, PPE nhỏ, che khuất, ánh sáng yếu và ảnh không đúng tỉ lệ 1:1.
+
+Smoke test contract trên một ảnh không vuông trước khi viết service:
+
+```bash
+.venv/bin/python - <<'PYCODE'
+import numpy as np
+import onnxruntime as ort
+from PIL import Image
+
+session = ort.InferenceSession(
+    "models/ppe-5c/dfine_m_960.onnx",
+    providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+)
+assert session.get_providers()[0] == "CUDAExecutionProvider"
+assert [(x.name, x.type, x.shape) for x in session.get_inputs()] == [
+    ("images", "tensor(float)", ["N", 3, 960, 960]),
+    ("orig_target_sizes", "tensor(int64)", ["N", 2]),
+]
+
+image = Image.open("test_non_square.jpg").convert("RGB")
+width, height = image.size
+tensor = np.asarray(
+    image.resize((960, 960), Image.Resampling.BILINEAR), dtype=np.float32
+)
+tensor = np.ascontiguousarray(tensor.transpose(2, 0, 1)[None] / 255.0)
+labels, boxes, scores = session.run(None, {
+    "images": tensor,
+    "orig_target_sizes": np.asarray([[width, height]], dtype=np.int64),
+})
+assert labels.shape == scores.shape == (1, 300)
+assert boxes.shape == (1, 300, 4)
+assert np.isfinite(boxes).all() and np.isfinite(scores).all()
+print("ORT CUDA contract OK", labels.shape, boxes.shape, scores.shape)
+PYCODE
+```
+
+Không nghiệm thu chỉ bằng việc model load thành công. Điều kiện tối thiểu là kết quả ONNX tương đương PyTorch và metric trên camera thực tế đạt yêu cầu của dự án.
+
+## 9. Những thứ cần mang sang project mới
+
+Bắt buộc:
+
+- `dfine_m_960.onnx`
+- Class mapping năm lớp ở trên
+- Preprocessing và ONNX contract trong tài liệu này
+- Checksum/version metadata
+
+Không bắt buộc ở runtime ONNX:
+
+- Repo D-FINE
+- File `.pth`
+- File YAML train
+- PyTorch hoặc torchvision
+- Dataset huấn luyện
+
+Nếu project cần đánh giá PPE theo từng người, phải port đầy đủ `src/ppe/inference.py`, `src/ppe/policy.py`, policy config, MediaPipe, OpenCV và file `pose_landmarker_heavy.task`. Nếu cảnh báo cần persistence theo từng người, bổ sung tracker/identity association; pose model và debounce toàn cảnh không thay thế tracking.

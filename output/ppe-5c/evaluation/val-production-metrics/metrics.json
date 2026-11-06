@@ -1,0 +1,101 @@
+{
+  "buckets": {},
+  "false_alarms_per_person": 0.1702808389619623,
+  "labels": {
+    "boots": {
+      "evaluated": 239,
+      "f1": 0.49201277955271566,
+      "false_negatives": 159,
+      "false_positives": 0,
+      "precision": 1.0,
+      "recall": 0.326271186440678,
+      "true_negatives": 3,
+      "true_positives": 77,
+      "unknown_coverage": 0.6408163265306123
+    },
+    "gloves": {
+      "evaluated": 811,
+      "f1": 0.2414698162729659,
+      "false_negatives": 570,
+      "false_positives": 8,
+      "precision": 0.92,
+      "recall": 0.13897280966767372,
+      "true_negatives": 141,
+      "true_positives": 92,
+      "unknown_coverage": 0.6238938053097345
+    },
+    "helmet": {
+      "evaluated": 2094,
+      "f1": 0.6035848270112547,
+      "false_negatives": 940,
+      "false_positives": 11,
+      "precision": 0.9850340136054422,
+      "recall": 0.43509615384615385,
+      "true_negatives": 419,
+      "true_positives": 724,
+      "unknown_coverage": 0.36978480456741325
+    },
+    "no_boots": {
+      "evaluated": 94,
+      "f1": 0.3,
+      "false_negatives": 6,
+      "false_positives": 8,
+      "precision": 0.2727272727272727,
+      "recall": 0.3333333333333333,
+      "true_negatives": 77,
+      "true_positives": 3,
+      "unknown_coverage": 0.6408163265306123
+    },
+    "no_gloves": {
+      "evaluated": 412,
+      "f1": 0.6117136659436009,
+      "false_negatives": 86,
+      "false_positives": 93,
+      "precision": 0.6025641025641025,
+      "recall": 0.6211453744493393,
+      "true_negatives": 92,
+      "true_positives": 141,
+      "unknown_coverage": 0.6238938053097345
+    },
+    "no_helmet": {
+      "evaluated": 1576,
+      "f1": 0.6593233674272226,
+      "false_negatives": 168,
+      "false_positives": 265,
+      "precision": 0.6125730994152047,
+      "recall": 0.7137989778534923,
+      "true_negatives": 724,
+      "true_positives": 419,
+      "unknown_coverage": 0.36978480456741325
+    },
+    "no_vest": {
+      "evaluated": 1293,
+      "f1": 0.6649916247906198,
+      "false_negatives": 333,
+      "false_positives": 67,
+      "precision": 0.8556034482758621,
+      "recall": 0.5438356164383562,
+      "true_negatives": 496,
+      "true_positives": 397,
+      "unknown_coverage": 0.41710914454277287
+    },
+    "vest": {
+      "evaluated": 1383,
+      "f1": 0.669365721997301,
+      "false_negatives": 463,
+      "false_positives": 27,
+      "precision": 0.9483747609942639,
+      "recall": 0.5172054223149114,
+      "true_negatives": 397,
+      "true_positives": 496,
+      "unknown_coverage": 0.41710914454277287
+    }
+  },
+  "macro_f1": 0.53030772537446,
+  "metadata": {
+    "instances": "../dataset/PPE_COMMERCIAL/current/annotations/instances_val.json",
+    "states": "../dataset/PPE_COMMERCIAL/current/annotations/states_val.json"
+  },
+  "no_ppe_macro_recall": 0.5530283255186302,
+  "people": 2813
+}
